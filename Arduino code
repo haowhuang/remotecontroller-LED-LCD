@@ -1,0 +1,114 @@
+#include <IRremote.h>
+#include <LiquidCrystal.h>
+
+#define IR_RECEIVE_PIN 5
+
+#define IR_BUTTON_0 22
+#define IR_BUTTON_1 12
+#define IR_BUTTON_2 24
+#define IR_BUTTON_3 94
+#define IR_BUTTON_FUNC_STOP 69
+
+#define LED1 12
+#define LED2 11
+#define LED3 10
+
+#define LCD_RS_PIN A5 
+#define LCD_E_PIN A4
+#define LCD_D4_PIN 6
+#define LCD_D5_PIN 7
+#define LCD_D6_PIN 8
+#define LCD_D7_PIN 9
+
+byte LEDArray[3] = {LED1, LED2, LED3};
+byte LEDStateArray[3] = {LOW, LOW, LOW}; 
+
+LiquidCrystal lcd(LCD_RS_PIN, LCD_E_PIN, LCD_D4_PIN,
+                  LCD_D5_PIN, LCD_D6_PIN, LCD_D7_PIN);
+
+void setUPAllLED(){
+  for(int i=0; i<3; i++){
+    pinMode(LEDArray[i], OUTPUT);
+  }
+}
+
+void powerOffAllLED(){
+  for(int i=0; i<3; i++){
+    LEDStateArray[i]= LOW;
+    digitalWrite(LEDArray[i], LOW);
+  }
+}
+
+void toggleLED(int LEDNumber){
+  if(LEDStateArray[LEDNumber-1] == HIGH){
+    LEDStateArray[LEDNumber-1] = LOW;
+  }
+  else{
+    LEDStateArray[LEDNumber-1] = HIGH;
+  }
+  digitalWrite(LEDArray[LEDNumber-1], LEDStateArray[LEDNumber-1]);
+}
+
+void LCDprintCommand(int command){
+  lcd.setCursor(0, 0);
+  lcd.print("command: ");
+  lcd.print(command);
+  lcd.print("     ");
+} 
+
+void LCDprintAction(String str){
+  lcd.setCursor(0,1);
+  lcd.print(str);
+}
+void setup() {
+  Serial.begin(115200);
+  IrReceiver.begin(IR_RECEIVE_PIN);
+  setUPAllLED();
+
+  lcd.begin(16, 2);
+}
+
+void loop() {
+  if(IrReceiver.decode()){
+    IrReceiver.resume();
+    int command = IrReceiver.decodedIRData.command;
+    switch(command){
+      case IR_BUTTON_0:{
+        powerOffAllLED();
+        LCDprintCommand(command);
+        LCDprintAction("power off allLEDs");
+        break;
+      }
+      case IR_BUTTON_1:{
+        toggleLED(1);
+        LCDprintCommand(command);
+        LCDprintAction("toggle LED 1    ");
+        break;
+      }
+      case IR_BUTTON_2:{
+        toggleLED(2);
+        LCDprintCommand(command);
+        LCDprintAction("toggle LED 2    ");
+        break;
+      }
+      case IR_BUTTON_3:{
+        toggleLED(3);
+        LCDprintCommand(command);
+        LCDprintAction("toggle LED 3    ");
+        break;
+      }
+      case IR_BUTTON_FUNC_STOP:{
+        lcd.clear();
+        break;
+      }
+      default:{
+        lcd.setCursor(0, 0);
+        lcd.print("Invalid command ");
+      }
+    }
+
+
+
+
+  }
+}
